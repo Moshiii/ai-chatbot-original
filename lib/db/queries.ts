@@ -38,8 +38,11 @@ import { ChatSDKError } from '../errors';
 // use the Drizzle adapter for Auth.js / NextAuth
 // https://authjs.dev/reference/adapter/drizzle
 
-// biome-ignore lint: Forbidden non-null assertion.
-const client = postgres(process.env.POSTGRES_URL!);
+if (!process.env.POSTGRES_URL) {
+  throw new Error('POSTGRES_URL environment variable is not set');
+}
+
+const client = postgres(process.env.POSTGRES_URL);
 const db = drizzle(client);
 
 export async function getUser(email: string): Promise<Array<User>> {
@@ -91,15 +94,33 @@ export async function saveChat({
   title: string;
   visibility: VisibilityType;
 }) {
+  console.log('Attempting to save chat with:', { id, userId, title, visibility });
   try {
-    return await db.insert(chat).values({
+    const result = await db.insert(chat).values({
       id,
       createdAt: new Date(),
       userId,
       title,
       visibility,
     });
+    console.log('Successfully saved chat:', result);
+    return result;
   } catch (error) {
+    console.error('Database error in saveChat:', error);
+    // Check if it's a connection error
+    if (error instanceof Error && error.message.includes('connect')) {
+      throw new ChatSDKError(
+        'bad_request:database',
+        'Failed to connect to database. Please check your database connection.'
+      );
+    }
+    // If it's a foreign key violation
+    if (error instanceof Error && error.message.includes('foreign key')) {
+      throw new ChatSDKError(
+        'bad_request:database',
+        'Failed to save chat: Invalid user ID or foreign key violation'
+      );
+    }
     throw new ChatSDKError('bad_request:database', 'Failed to save chat');
   }
 }
@@ -192,9 +213,24 @@ export async function getChatsByUserId({
       hasMore,
     };
   } catch (error) {
+    console.error('Database error in getChatsByUserId:', error);
+    
+    // Check if it's a connection error
+    if (error instanceof Error && error.message.includes('connect')) {
+      throw new ChatSDKError(
+        'bad_request:database',
+        'Failed to connect to database. Please check your database connection.'
+      );
+    }
+    
+    // If it's already a ChatSDKError, rethrow it
+    if (error instanceof ChatSDKError) {
+      throw error;
+    }
+    
     throw new ChatSDKError(
       'bad_request:database',
-      'Failed to get chats by user id',
+      error instanceof Error ? error.message : 'Failed to get chats by user id'
     );
   }
 }

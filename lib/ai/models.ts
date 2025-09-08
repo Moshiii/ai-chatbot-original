@@ -9,12 +9,17 @@ export interface ChatModel {
 export const chatModels: Array<ChatModel> = [
   {
     id: 'chat-model',
-    name: 'Grok Vision',
-    description: 'Advanced multimodal model with vision and text capabilities',
+    name: 'OpenAI GPT-4 Vision',
+    description: 'OpenAI GPT-4 model with multimodal vision and text capabilities',
   },
   {
     id: 'chat-model-reasoning',
-    name: 'Grok Reasoning',
-    description: 'Uses advanced chain-of-thought reasoning for complex problems',
+    name: 'OpenAI GPT-4 Reasoning',
+    description: 'GPT-4 model optimized for advanced chain-of-thought reasoning on complex problems',
+  },
+  {
+    id: 'a2a-model',
+    name: 'A2A Chat',
+    description: 'Chat powered by on-prem A2A AI server',
   },
 ];

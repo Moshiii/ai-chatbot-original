@@ -1,10 +1,13 @@
 import { compare } from 'bcrypt-ts';
 import NextAuth, { type DefaultSession } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
-import { createGuestUser, getUser } from '@/lib/db/queries';
+import GitHub from 'next-auth/providers/github';
+import { createGuestUser, getUser, createUser } from '@/lib/db/queries';
 import { authConfig } from './auth.config';
 import { DUMMY_PASSWORD } from '@/lib/constants';
 import type { DefaultJWT } from 'next-auth/jwt';
+import { generateHashedPassword } from '@/lib/db/utils';
+import { generateUUID } from '@/lib/utils';
 
 export type UserType = 'guest' | 'regular';
 
